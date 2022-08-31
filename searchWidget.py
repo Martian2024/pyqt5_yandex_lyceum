@@ -1,0 +1,60 @@
+from PyQt5 import QtCore, QtGui, QtWidgets
+from PyQt5.QtWidgets import QWidget, QMainWindow
+
+
+class Ui_search(QMainWindow):
+    def __init__(self):
+        super().__init__()
+        self.setObjectName("MainWindow")
+        self.resize(800, 600)
+        self.centralwidget = QtWidgets.QWidget(self)
+        self.centralwidget.setObjectName("centralwidget")
+        self.tableWidget = QtWidgets.QTableWidget(self.centralwidget)
+        self.tableWidget.setGeometry(QtCore.QRect(40, 40, 421, 511))
+        self.tableWidget.setObjectName("tableWidget")
+        self.tableWidget.setColumnCount(0)
+        self.tableWidget.setRowCount(0)
+        self.label = QtWidgets.QLabel(self.centralwidget)
+        self.label.setGeometry(QtCore.QRect(490, 40, 61, 21))
+        font = QtGui.QFont()
+        font.setPointSize(9)
+        self.label.setFont(font)
+        self.label.setObjectName("label")
+        self.comboBox = QtWidgets.QComboBox(self.centralwidget)
+        self.comboBox.setGeometry(QtCore.QRect(560, 40, 211, 22))
+        self.comboBox.setObjectName("comboBox")
+        self.comboBox.addItems(['Имя(Строка)', 'Id(Число)', 'Дата создания(Гггг-мм-дд)', 'Имя игрока(Строка)'])
+        self.lineEdit = QtWidgets.QLineEdit(self.centralwidget)
+        self.lineEdit.setGeometry(QtCore.QRect(500, 90, 271, 20))
+        self.lineEdit.setObjectName("lineEdit")
+        self.pushButton = QtWidgets.QPushButton(self.centralwidget)
+        self.pushButton.setGeometry(QtCore.QRect(564, 130, 81, 31))
+        self.pushButton.setObjectName("pushButton")
+        self.ok = QtWidgets.QPushButton(self.centralwidget)
+        self.ok.setGeometry(QtCore.QRect(690, 130, 81, 31))
+        self.ok.setObjectName("pushButton_2")
+        self.pushButton_4 = QtWidgets.QPushButton(self.centralwidget)
+        self.pushButton_4.setGeometry(QtCore.QRect(40, 0, 231, 23))
+        self.pushButton_4.setObjectName("pushButton_4")
+        self.setCentralWidget(self.centralwidget)
+        self.menubar = QtWidgets.QMenuBar(self)
+        self.menubar.setGeometry(QtCore.QRect(0, 0, 800, 21))
+        self.menubar.setObjectName("menubar")
+        self.setMenuBar(self.menubar)
+        self.statusbar = QtWidgets.QStatusBar(self)
+        self.statusbar.setObjectName("statusbar")
+        self.setStatusBar(self.statusbar)
+        self.setFixedSize(800, 600)
+
+        self.retranslateUi(self)
+        QtCore.QMetaObject.connectSlotsByName(self)
+
+        self.show()
+
+    def retranslateUi(self, MainWindow):
+        _translate = QtCore.QCoreApplication.translate
+        MainWindow.setWindowTitle(_translate("MainWindow", "MainWindow"))
+        self.label.setText(_translate("MainWindow", "Поиск по:"))
+        self.pushButton.setText(_translate("MainWindow", "Поиск"))
+        self.ok.setText(_translate("MainWindow", "ОК"))
+        self.pushButton_4.setText(_translate("MainWindow", "Возврат к начальному экрану"))

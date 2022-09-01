@@ -82,8 +82,8 @@ class Main(QApplication):
                 for name in names:
                     pass
                 self.mainwindow.tableWidget.setItem(rowpos, 0, QTableWidgetItem(str(i[0])))
-                self.mainwindow.tableWidget.setItem(rowpos, 1, QTableWidgetItem(i[1]))
-                self.mainwindow.tableWidget.setItem(rowpos, 2, QTableWidgetItem(name[0]))
+                self.mainwindow.tableWidget.setItem(rowpos, 1, QTableWidgetItem(str(i[1])))
+                self.mainwindow.tableWidget.setItem(rowpos, 2, QTableWidgetItem(str(i[2])))
                 self.mainwindow.tableWidget.setItem(rowpos, 3, QTableWidgetItem(str(i[3])))
             self.searchcompl = True
 
@@ -92,7 +92,7 @@ class Main(QApplication):
             if any([self.mainwindow.tableWidget.item(i, a).isSelected() for a in range(3)]):
                 self.name = self.mainwindow.tableWidget.item(i, 1).text()
                 self.id = int(self.mainwindow.tableWidget.item(i, 0).text())
-        if self.name != '':
+        if self.id != '':
             self.mainwindow.hide()
             self.window1 = Ui_MainMain()
             self.window2 = Ui_MainView()
@@ -199,8 +199,8 @@ class Main(QApplication):
                     self.window3.elemcounter += 1
             if lines[-1] == '+':
                 self.window3.elemcounter = 9
-        if lines[-1] != '+' and lines[-1] != '-':
-            self.data = int(lines[-1])
+#            if lines[-1] != '+' and lines[-1] != '-': #i don't know what the fuck it's doing
+#                self.data = int(lines[-1])
 
     def new(self):
         self.window1 = Ui_MainMain()

@@ -32,6 +32,8 @@ class Main(QApplication):
         self.name = ''
         self.id = ''
 
+        self.making_new = False
+
     def do(self):
         if self.sender().text() == "Создать нового персонажа":
             self.new()
@@ -41,6 +43,7 @@ class Main(QApplication):
             self.opening.hide()
 
     def old(self):
+        self.making_new = False
         self.mainwindow = Ui_search()
         self.mainwindow.tableWidget.setColumnCount(4)
         self.mainwindow.tableWidget.setHorizontalHeaderLabels(['Id', 'Имя', 'Имя игрока', 'Дата создания'])
@@ -160,15 +163,10 @@ class Main(QApplication):
                 if i != '\n':
                     self.window1.tableWidget.insertRow(self.window1.tableWidget.rowCount())
                     print(i.split('/'))
-                    for a in i.split('/'):
-                        self.window1.tableWidget.setItem(self.window1.tableWidget.rowCount() - 1, 0,
-                                                         QTableWidgetItem(a.rstrip('\n')))
-                        self.window1.tableWidget.setItem(self.window1.tableWidget.rowCount() - 1, 1,
-                                                         QTableWidgetItem(a.rstrip('\n')))
-                        self.window1.tableWidget.setItem(self.window1.tableWidget.rowCount() - 1, 2,
-                                                         QTableWidgetItem(a.rstrip('\n')))
-                        self.window1.tableWidget.setItem(self.window1.tableWidget.rowCount() - 1, 3,
-                                                         QTableWidgetItem(a.rstrip('\n')))
+                    for a in range(len(i.split('/'))):
+                        print(a)
+                        self.window1.tableWidget.setItem(self.window1.tableWidget.rowCount() - 1, a,
+                                                         QTableWidgetItem(i.split('/')[a].rstrip('\n')))
             for i in range(len(lines[lines.index('=======\n') + 1].split(' '))):
                 self.window2.small[i].setText(lines[lines.index('=======\n') + 1].split(' ')[i].rstrip('\n'))
             counter = lines.index('=======\n') + 3
@@ -203,6 +201,7 @@ class Main(QApplication):
 #                self.data = int(lines[-1])
 
     def new(self):
+        self.making_new = True
         self.window1 = Ui_MainMain()
         self.window2 = Ui_MainView()
         self.window3 = Ui_MainFocuses()
@@ -263,124 +262,130 @@ class Main(QApplication):
                     self.window3.elemcounter += 1
 
     def save(self):
-        self.data = open(self.window1.lineEdit.text() + '.txt', mode='w', encoding='utf-16')
-        for cat in self.window1.categories:
+        check = self.cursor.execute("""SELECT * FROM search
+            WHERE name = ? """, (self.window1.lineEdit.text(),)).fetchall()
+        if check == [] or not self.making_new:
+            self.data = open(self.window1.lineEdit.text() + '.txt', mode='w', encoding='utf-16')
+            for cat in self.window1.categories:
+                res = []
+                if type(cat) is dict:
+                    for i in cat.keys():
+                        if type(cat[i]) is QLineEdit:
+                            res.append(cat[i].text())
+                        elif type(cat[i]) is QSpinBox:
+                            res.append(str(cat[i].value()))
+                        elif type(cat[i]) is QComboBox:
+                            res.append(cat[i].currentText())
+                        elif type(cat[i]) is list:
+                            res.append('/'.join([str(cat[i][0].value()), str(cat[i][1].value())]))
+                        if type(i) is QCheckBox:
+                            if i.isChecked():
+                                res[-1] = '+' + res[-1]
+                else:
+                    for i in cat:
+                        if type(i) is QLineEdit:
+                            res.append(i.text())
+                        elif type(i) is QSpinBox:
+                            res.append(str(i.value()))
+                        elif type(i) is QComboBox:
+                            res.append(i.currentText())
+                        elif type(i) is list:
+                            res.append('/'.join([str(i[0].value()), str(i[1].value())]))
+                self.data.write(' '.join(res) + '\n')
             res = []
-            if type(cat) is dict:
-                for i in cat.keys():
-                    if type(cat[i]) is QLineEdit:
-                        res.append(cat[i].text())
-                    elif type(cat[i]) is QSpinBox:
-                        res.append(str(cat[i].value()))
-                    elif type(cat[i]) is QComboBox:
-                        res.append(cat[i].currentText())
-                    elif type(cat[i]) is list:
-                        res.append('/'.join([str(cat[i][0].value()), str(cat[i][1].value())]))
-                    if type(i) is QCheckBox:
-                        if i.isChecked():
-                            res[-1] = '+' + res[-1]
-            else:
-                for i in cat:
-                    if type(i) is QLineEdit:
-                        res.append(i.text())
-                    elif type(i) is QSpinBox:
-                        res.append(str(i.value()))
-                    elif type(i) is QComboBox:
-                        res.append(i.currentText())
-                    elif type(i) is list:
-                        res.append('/'.join([str(i[0].value()), str(i[1].value())]))
+            for i in range(self.window1.listWidget_2.count()):
+                res.append(self.window1.listWidget_2.item(i).text().rstrip('\n'))
             self.data.write(' '.join(res) + '\n')
-        res = []
-        for i in range(self.window1.listWidget_2.count()):
-            res.append(self.window1.listWidget_2.item(i).text().rstrip('\n'))
-        self.data.write(' '.join(res) + '\n')
-        res = []
-        for i in range(self.window1.listWidget.count()):
-            res.append(self.window1.listWidget.item(i).text().rstrip('\n'))
-        self.data.write(' '.join(res) + '\n')
-        res = []
-        for i in range(self.window1.tableWidget.rowCount()):
-            res.append(
-                '/'.join([self.window1.tableWidget.item(i, 0).text(), self.window1.tableWidget.item(i, 1).text(),
-                          self.window1.tableWidget.item(i, 2).text(), self.window1.tableWidget.item(i, 3).text()]))
-        self.data.write(' '.join(res))
-        self.data.write('\n=======\n')
+            res = []
+            for i in range(self.window1.listWidget.count()):
+                res.append(self.window1.listWidget.item(i).text().rstrip('\n'))
+            self.data.write(' '.join(res) + '\n')
+            res = []
+            for i in range(self.window1.tableWidget.rowCount()):
+                res.append(
+                    '/'.join([self.window1.tableWidget.item(i, 0).text(), self.window1.tableWidget.item(i, 1).text(),
+                              self.window1.tableWidget.item(i, 2).text(), self.window1.tableWidget.item(i, 3).text()]))
+            self.data.write(' '.join(res))
+            self.data.write('\n=======\n')
 
-        res = []
-        for i in self.window2.small:
-            res.append(i.text())
-        self.data.write(' '.join(res) + '\n=\n')
-        res = []
-        for i in self.window2.plain:
-            print(i.toPlainText())
-            res.append(i.toPlainText().rstrip('\n'))
-        self.data.write('\n=\n'.join(res) + '\n')
-        self.data.write('\n=======\n')
+            res = []
+            for i in self.window2.small:
+                res.append(i.text())
+            self.data.write(' '.join(res) + '\n=\n')
+            res = []
+            for i in self.window2.plain:
+                print(i.toPlainText())
+                res.append(i.toPlainText().rstrip('\n'))
+            self.data.write('\n=\n'.join(res) + '\n')
+            self.data.write('\n=======\n')
 
-        for i in self.window3.focuses.keys():
-            if i.text() != '':
-                self.data.write(
-                    i.text().rstrip('\n') + '\n' + self.window3.focuses[i].toPlainText().rstrip('\n') + '\n=\n')
+            for i in self.window3.focuses.keys():
+                if i.text() != '':
+                    self.data.write(
+                        i.text().rstrip('\n') + '\n' + self.window3.focuses[i].toPlainText().rstrip('\n') + '\n=\n')
+                else:
+                    self.data.write('\n' + '\n=\n')
+            if self.window3.elemcounter >= 8:
+                self.data.write('+')
             else:
-                self.data.write('\n' + '\n=\n')
-        if self.window3.elemcounter >= 8:
-            self.data.write('+')
-        else:
-            self.data.write('-')
-            self.data.write('\n')
-        self.name = self.window1.lineEdit.text()
+                self.data.write('-')
+                self.data.write('\n')
+            self.name = self.window1.lineEdit.text()
 
-        try:
-            if not (self.id,) in self.cursor.execute("""SELECT Id FROM search"""):
-                self.cursor.execute("""INSERT INTO search(name, date, userid) VALUES (?, ?, 0)""",
-                                    (self.window1.lineEdit.text(), str(datetime.now().date()),))
-                self.sqconnect.commit()
-                self.cursor.execute("""INSERT INTO users(name) VALUES (?)""",
-                                    (self.window1.lineEdit_2.text(),))
-                self.sqconnect.commit()
-                a = self.cursor.execute("""SELECT id FROM users WHERE name = ?""", (self.window1.lineEdit_2.text(),))
-                for i in a:
-                    pass
-                self.cursor.execute("""UPDATE search
-                                SET userid = ?
-                                WHERE userid = 0""", (i[0],))
-                self.sqconnect.commit()
-                self.data.write(self.id)
-        except sqlite3.OperationalError:
-            self.cursor.execute("""CREATE TABLE users (
-    id   INTEGER PRIMARY KEY AUTOINCREMENT
-                 NOT NULL
-                 UNIQUE,
-    name STRING  NOT NULL
-)""")
-            self.cursor.execute("""CREATE TABLE search (
-    id     INTEGER PRIMARY KEY AUTOINCREMENT
-                   UNIQUE
-                   NOT NULL,
-    name   STRING  NOT NULL,
-    userid         REFERENCES users (id) 
-                   NOT NULL,
-    date   STRING  NOT NULL
-                    UNIQUE ON CONFLICT REPLACE
-)""")
-            if not (self.id,) in self.cursor.execute("""SELECT Id FROM search"""):
-                self.cursor.execute("""INSERT INTO search(name, date, userid) VALUES (?, ?, 0)""",
-                                    (self.window1.lineEdit.text(), str(datetime.now().date()),))
-                self.cursor.execute("""INSERT INTO users(name) VALUES (?)""",
-                                    (self.window1.lineEdit_2.text(),))
-                a = self.cursor.execute("""SELECT id FROM users WHERE NAME = ?""", (self.window1.lineEdit_2.text(),))
-                for i in a:
-                    pass
-                self.cursor.execute("""UPDATE search
-                SET userid = ?
-                WHERE userid = 0""", (i[0],))
-                self.sqconnect.commit()
-                self.data.write(self.id)
-        except PermissionError:
-            pass
-        except OSError:
-            pass
-        self.data.close()
+            try:
+                if not (self.id,) in self.cursor.execute("""SELECT Id FROM search"""):
+                    self.cursor.execute("""INSERT INTO search(name, date, userid) VALUES (?, ?, 0)""",
+                                        (self.window1.lineEdit.text(), str(datetime.now().date()),))
+                    self.sqconnect.commit()
+                    self.cursor.execute("""INSERT INTO users(name) VALUES (?)""",
+                                        (self.window1.lineEdit_2.text(),))
+                    self.sqconnect.commit()
+                    a = self.cursor.execute("""SELECT id FROM users WHERE name = ?""", (self.window1.lineEdit_2.text(),))
+                    for i in a:
+                        pass
+                    self.cursor.execute("""UPDATE search
+                                    SET userid = ?
+                                    WHERE userid = 0""", (i[0],))
+                    self.sqconnect.commit()
+                    self.data.write(self.id)
+            except sqlite3.OperationalError:
+                self.cursor.execute("""CREATE TABLE users (
+        id   INTEGER PRIMARY KEY AUTOINCREMENT
+                     NOT NULL
+                     UNIQUE,
+        name STRING  NOT NULL
+    )""")
+                self.cursor.execute("""CREATE TABLE search (
+        id     INTEGER PRIMARY KEY AUTOINCREMENT
+                       UNIQUE
+                       NOT NULL,
+        name   STRING  NOT NULL,
+        userid         REFERENCES users (id) 
+                       NOT NULL,
+        date   STRING  NOT NULL
+                        UNIQUE ON CONFLICT REPLACE
+    )""")
+                if not (self.id,) in self.cursor.execute("""SELECT Id FROM search"""):
+                    self.cursor.execute("""INSERT INTO search(name, date, userid) VALUES (?, ?, 0)""",
+                                        (self.window1.lineEdit.text(), str(datetime.now().date()),))
+                    self.cursor.execute("""INSERT INTO users(name) VALUES (?)""",
+                                        (self.window1.lineEdit_2.text(),))
+                    a = self.cursor.execute("""SELECT id FROM users WHERE NAME = ?""", (self.window1.lineEdit_2.text(),))
+                    for i in a:
+                        pass
+                    self.cursor.execute("""UPDATE search
+                    SET userid = ?
+                    WHERE userid = 0""", (i[0],))
+                    self.sqconnect.commit()
+                    self.data.write(self.id)
+            except PermissionError:
+                pass
+            except OSError:
+                pass
+            self.data.close()
+        else:
+            dialog_value = QMessageBox.question(self.sender(), '',
+                                               "Это имя уже занято", QMessageBox.Ok)
 
     def switch(self):
         if self.sender().text() == '<< к образу':

@@ -262,9 +262,29 @@ class Main(QApplication):
                     self.window3.elemcounter += 1
 
     def save(self):
-        check = self.cursor.execute("""SELECT * FROM search
-            WHERE name = ? """, (self.window1.lineEdit.text(),)).fetchall()
+        try:
+            check = self.cursor.execute("""SELECT * FROM search
+                WHERE name = ? """, (self.window1.lineEdit.text(),)).fetchall()
+        except sqlite3.OperationalError:
+            check = []
+            self.cursor.execute("""CREATE TABLE users (
+            id   INTEGER PRIMARY KEY AUTOINCREMENT
+                         NOT NULL
+                         UNIQUE,
+            name STRING  NOT NULL
+        )""")
+            self.cursor.execute("""CREATE TABLE search (
+            id     INTEGER PRIMARY KEY AUTOINCREMENT
+                           UNIQUE
+                           NOT NULL,
+            name   STRING  NOT NULL,
+            userid         REFERENCES users (id) 
+                           NOT NULL,
+            date   STRING  NOT NULL
+                            UNIQUE ON CONFLICT REPLACE
+        )""")
         if check == [] or not self.making_new:
+            self.making_new = False
             self.data = open(self.window1.lineEdit.text() + '.txt', mode='w', encoding='utf-16')
             for cat in self.window1.categories:
                 res = []
@@ -348,42 +368,13 @@ class Main(QApplication):
                                     WHERE userid = 0""", (i[0],))
                     self.sqconnect.commit()
                     self.data.write(self.id)
-            except sqlite3.OperationalError:
-                self.cursor.execute("""CREATE TABLE users (
-        id   INTEGER PRIMARY KEY AUTOINCREMENT
-                     NOT NULL
-                     UNIQUE,
-        name STRING  NOT NULL
-    )""")
-                self.cursor.execute("""CREATE TABLE search (
-        id     INTEGER PRIMARY KEY AUTOINCREMENT
-                       UNIQUE
-                       NOT NULL,
-        name   STRING  NOT NULL,
-        userid         REFERENCES users (id) 
-                       NOT NULL,
-        date   STRING  NOT NULL
-                        UNIQUE ON CONFLICT REPLACE
-    )""")
-                if not (self.id,) in self.cursor.execute("""SELECT Id FROM search"""):
-                    self.cursor.execute("""INSERT INTO search(name, date, userid) VALUES (?, ?, 0)""",
-                                        (self.window1.lineEdit.text(), str(datetime.now().date()),))
-                    self.cursor.execute("""INSERT INTO users(name) VALUES (?)""",
-                                        (self.window1.lineEdit_2.text(),))
-                    a = self.cursor.execute("""SELECT id FROM users WHERE NAME = ?""", (self.window1.lineEdit_2.text(),))
-                    for i in a:
-                        pass
-                    self.cursor.execute("""UPDATE search
-                    SET userid = ?
-                    WHERE userid = 0""", (i[0],))
-                    self.sqconnect.commit()
-                    self.data.write(self.id)
+
             except PermissionError:
                 pass
             except OSError:
                 pass
             self.data.close()
-        else:
+        elif self.making_new:
             dialog_value = QMessageBox.question(self.sender(), '',
                                                "Это имя уже занято", QMessageBox.Ok)
 
